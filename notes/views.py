@@ -1,7 +1,12 @@
 from time import timezone
 
+from django.core.serializers.json import DjangoJSONEncoder
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import authentication, permissions
+from . import serializers
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from . import models
 from django.core.files import File
 from urllib.request import urlopen
@@ -15,7 +20,7 @@ def get_notes(request, content_id):
         notes = models.Notes.objects.get(notes_id=content_id)
     else:
         notes = models.Notes.objects.create(notes_id=content_id, title="pending")
-        tasks.get_pdf.delay(content_id = content_id)
+        tasks.get_notes.delay(content_id=content_id)
         # content_id = str(content_id)
         # base_url = "https://lecturenotes.in/material/" + content_id
         # client = requests.Session()
@@ -93,5 +98,24 @@ def get_notes(request, content_id):
 
 
 def home(request):
-    tasks.sleepy.delay()
-    return HttpResponse("Hello ! I am Home Page")
+    if request.method == 'POST':
+        notesid = request.POST['notesid']
+        return redirect('get-notes', notesid)
+
+    return render(request, "index.html")
+
+
+class GetNotes(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        content_id = self.request.query_params.get('notes_id', None)
+
+        if models.Notes.objects.filter(notes_id=content_id).exists():
+            notes = models.Notes.objects.filter(notes_id=content_id)
+        else:
+            notes = models.Notes.objects.create(notes_id=content_id, title="pending")
+            tasks.get_notes.delay(content_id=content_id)
+            notes = models.Notes.objects.filter(notes_id=content_id)
+        serializer = serializers.NotesSerializer(notes, many=True)
+        return Response({"Notes": serializer.data})

@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '#b!=hw4k1q68)muf81@gr!@!v0z9cfmq0h!z!)2i_3ms!i(fh#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -143,7 +143,7 @@ CORS_ORIGIN_WHITELIST = [
     'https://localhost:3000',
 ]
 
-BROKER_URL = 'redis://h:paa4920eead03ab6681c9c6b298bd9762690960b810d2d946f1a6972e48c67f96@ec2-34-236-54-188.compute-1.amazonaws.com:15559'
+BROKER_URL = os.environ['REDIS_URL']
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
